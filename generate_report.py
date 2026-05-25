@@ -8,8 +8,8 @@ from groq import Groq
 
 # ── Config ────────────────────────────────────────────────────────────────────
 CSV_PATH      = os.environ.get('CSV_PATH', '/data/prod-log.csv')
-TEMPLATE_PATH = '/app/weekly-report-template.pptx'
-OUTPUT_DIR    = '/output'
+TEMPLATE_PATH = os.environ.get('TEMPLATE_PATH', os.path.join(os.path.dirname(__file__), 'weekly-report-template.pptx'))
+OUTPUT_DIR    = os.environ.get('OUTPUT_DIR', '/output')
 GROQ_KEY      = os.environ.get('GROQ_API_KEY', '')
 
 REPORT_MONTH  = os.environ.get('REPORT_MONTH', '05_May')
