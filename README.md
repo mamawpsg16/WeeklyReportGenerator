@@ -1,79 +1,75 @@
 # Weekly Report Generator
 
-Generate weekly productivity reports from CSV logs. Compares planned vs actual hours by category.
+Generates a branded PowerPoint weekly productivity report from a CSV log using AI analysis. Runs via Docker with a web UI.
 
 ## What it does
 
-- Reads productivity log (CSV)
-- Filters by month and week
-- Groups activities by category
-- Shows planned vs actual hours
-- Calculates variance (over/under)
+- Upload your prod-log CSV through a web UI
+- Select month and week from auto-populated dropdowns
+- Previews filtered data and hour metrics before generating
+- Populates a PowerPoint template with task data across slides
+- Generates a concise AI analysis paragraph using Groq (Llama 3.3)
+- Download the finished PPTX directly from the browser
+
+## Requirements
+
+- Docker Desktop with WSL 2 backend
+- A free [Groq API key](https://console.groq.com)
 
 ## Setup
 
-1. Clone repo
-2. Create virtual environment:
-   ```bash
-   python -m venv venv
-   source venv/bin/activate
+1. Clone the repo
+2. Add your Groq API key to a `.env` file in the project root:
    ```
+   GROQ_API_KEY=your_key_here
+   ```
+3. Place your PowerPoint template as `weekly-report-template.pptx` in the project root
 
-3. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
+## Running
+
+```bash
+docker compose up -d --build
+```
+
+Open **http://localhost:8501** in your browser.
+
+To stop:
+```bash
+docker compose down
+```
 
 ## Usage
 
-1. Update variables in `main.py`:
-   ```python
-   month = '05_May'  # Change month
-   week = 'Week 1'   # Change week
-   ```
-
-2. Place CSV in parent folder (or update path)
-
-3. Run:
-   ```bash
-   python main.py
-   ```
-
-## Output
-
-Shows report by category:
-- Project name
-- Planned hours
-- Actual hours
-- Remarks
-- Total with variance
-
-Example:
-```
-================================================================================
-Category: Project
-================================================================================
-                              Project  Planned Hours  Actual Hours Consumed Remarks
-[SFA-App] Sales Return & Replace            20.0                   13.0
-[SFA-Web] Expenses Revamp                    3.0                    1.0  Support UAT
-
-Total: Planned=23.0, Actual=14.0, Variance=-9.0
-```
+1. Upload your `prod-log.csv`
+2. Select the month and week
+3. Fill in presenter name and reporting date
+4. Click **Generate Report**
+5. Click **Download PPTX** when it's ready
 
 ## CSV Format
 
 Required columns:
-- Month
-- Week No
-- Category
-- Project
-- Activity/Task
-- Planned Hours
-- Actual Hours Consumed
-- Remarks
 
-## Next Steps
+| Column | Description |
+|---|---|
+| Month | e.g. `05_May` |
+| Week No | e.g. `Week 3` |
+| Category | e.g. `Project`, `Major Enhancements` |
+| Project | Application or domain name |
+| Activity/Task | Task description |
+| Planned Hours | Numeric |
+| Actual Hours Consumed | Numeric |
+| Remarks | Optional notes |
 
-- Export to PDF/PowerPoint
-- Email reports automatically
-- Add chart visualization
+## Project Structure
+
+```
+├── app.py                        # Streamlit web UI
+├── generate_report.py            # Report generation logic
+├── main.py                       # CLI version (print to terminal)
+├── weekly-report-template.pptx  # PowerPoint template (not committed)
+├── requirements.txt
+├── Dockerfile
+├── docker-compose.yml
+└── .env                          # API keys (not committed)
+```
