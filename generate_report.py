@@ -54,6 +54,8 @@ def set_cell_text(cell, text):
 
     if runs:
         runs[0].text = str(text)
+        runs[0].font.name = 'Montserrat'
+        runs[0].font.size = 100800  # 8pt in EMUs (1pt = 12600 EMUs)
         for r in runs[1:]:
             r._r.getparent().remove(r._r)
     else:
@@ -64,6 +66,8 @@ def set_cell_text(cell, text):
             f'<a:t>{text_escaped}</a:t></a:r>'
         )
         para._p.append(parse_xml(r_xml))
+        para.runs[0].font.name = 'Montserrat'
+        para.runs[0].font.size = 100800  # 8pt in EMUs
 
 
 def add_table_row(table, template_row_idx=1):
