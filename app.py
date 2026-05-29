@@ -22,14 +22,74 @@ from generate_report import (
 )
 from pptx import Presentation
 
+# ── Validators ────────────────────────────────────────────────────────────────
+def validate_productivity_log(df):
+    """Validate Productivity Log CSV structure and data."""
+    required_cols = ['Month', 'Week No', 'Planned Hours', 'Actual Hours Consumed', 'Category', 'Project', 'Activity/Task']
+    errors = []
+    warnings = []
+
+    # Check required columns
+    missing_cols = [c for c in required_cols if c not in df.columns]
+    if missing_cols:
+        errors.append(f"Missing required columns: {', '.join(missing_cols)}")
+
+    # Filter out completely empty rows
+    df_clean = df.dropna(how='all').copy()
+    filtered_count = len(df) - len(df_clean)
+
+    if len(df_clean) == 0:
+        errors.append("No data rows found after filtering.")
+        return {'valid': False, 'errors': errors, 'warnings': warnings, 'df': None, 'filtered': filtered_count}
+
+    # Validate numeric columns
+    for col in ['Planned Hours', 'Actual Hours Consumed']:
+        if col in df_clean.columns:
+            try:
+                df_clean[col] = pd.to_numeric(df_clean[col], errors='coerce')
+                null_count = df_clean[col].isna().sum()
+                if null_count > 0:
+                    warnings.append(f"Found {null_count} non-numeric values in '{col}', converted to 0")
+                    df_clean[col].fillna(0, inplace=True)
+            except Exception as e:
+                errors.append(f"Error parsing '{col}': {str(e)}")
+
+    valid = len(errors) == 0
+    return {
+        'valid': valid,
+        'errors': errors,
+        'warnings': warnings,
+        'df': df_clean if valid else None,
+        'row_count': len(df_clean),
+        'filtered': filtered_count
+    }
+
 st.set_page_config(page_title='Weekly Report Generator', layout='centered')
 st.title('Weekly Report Generator')
 
 # ── Upload CSV ────────────────────────────────────────────────────────────────
-uploaded = st.file_uploader('Upload your prod-log CSV', type='csv')
+st.markdown('Upload your Productivity Log <span style="color: red;">(.CSV)</span>', unsafe_allow_html=True)
+uploaded = st.file_uploader('', type='csv', accept_multiple_files=False, label_visibility='collapsed')
 
 if uploaded:
-    df_full = pd.read_csv(uploaded)
+    df_full = pd.read_csv(uploaded, skiprows=4)
+
+    # Validate CSV
+    validation = validate_productivity_log(df_full)
+
+    if not validation['valid']:
+        st.error('❌ CSV Validation Failed')
+        for err in validation['errors']:
+            st.error(f"• {err}")
+        st.stop()
+
+    if validation['warnings']:
+        with st.warning('⚠️ Warnings'):
+            for warn in validation['warnings']:
+                st.write(f"• {warn}")
+
+    st.success(f"✓ CSV loaded: {validation['row_count']} rows ({validation['filtered']} empty rows filtered)")
+    df_full = validation['df']
 
     months = sorted(df_full['Month'].dropna().unique().tolist())
     weeks  = sorted(df_full['Week No'].dropna().unique().tolist())

@@ -25,7 +25,7 @@ CSV_PROJECT    = 'Project'
 CSV_TASK       = 'Activity/Task'
 CSV_PLANNED_H  = 'Planned Hours'
 CSV_ACTUAL_H   = 'Actual Hours Consumed'
-CSV_REMARKS    = 'Remarks'
+CSV_REMARKS    = 'Remarks (Optional)'
 CSV_PU         = 'Planned/Unplanned'   # set to None if column doesn't exist
 
 # Slide indexes (0-based)
@@ -104,18 +104,31 @@ def fill_table(table, data_rows, has_time_col=False):
             if j < len(tcs):
                 set_cell_text(table.cell(i + 1, j), str(val) if val else '')
 
-    # Clear any leftover rows beyond the data
-    for i in range(len(data_rows), len(data_trs)):
-        tr = data_trs[i]
+
+
+def remove_empty_rows(table):
+    """Delete rows where all cells are empty."""
+    tbl = table._tbl
+    tr_list = list(tbl.findall(qn('a:tr')))[1:]  # skip header
+
+    for tr in tr_list:
         tcs = tr.findall(qn('a:tc'))
+        is_empty = True
         for tc in tcs:
+            # Check if cell has any text
             txBody = tc.find(qn('a:txBody'))
             if txBody is not None:
                 for para in txBody.findall(qn('a:p')):
                     for r in para.findall(qn('a:r')):
                         t = r.find(qn('a:t'))
-                        if t is not None:
-                            t.text = ''
+                        if t is not None and t.text and t.text.strip():
+                            is_empty = False
+                            break
+            if not is_empty:
+                break
+
+        if is_empty:
+            tr.getparent().remove(tr)
 
 
 def get_table_from_slide(slide):
@@ -227,14 +240,10 @@ def update_data_tables(prs, df):
             set_cell_text(table.cell(last_row_idx, 3), 'Total:')
             set_cell_text(table.cell(last_row_idx, 4), f'{total_planned:.2f}')
             set_cell_text(table.cell(last_row_idx, 5), f'{total_actual:.2f}')
+            remove_empty_rows(table)
         else:
-            has_time = (len(table.columns) == 8)
-            if has_time:
-                # Insert empty Time column (index 6) before Remarks
-                chunk_with_time = [r[:6] + [''] + r[6:] for r in chunk]
-                fill_table(table, chunk_with_time, has_time_col=True)
-            else:
-                fill_table(table, chunk)
+            fill_table(table, chunk)
+            remove_empty_rows(table)
 
         offset += cap
         if offset >= len(all_rows):
