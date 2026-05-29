@@ -113,7 +113,8 @@ if uploaded:
 
     df_filtered[CSV_PLANNED_H] = df_filtered[CSV_PLANNED_H].fillna(0)
     df_filtered[CSV_ACTUAL_H]  = df_filtered[CSV_ACTUAL_H].fillna(0)
-    df_filtered[CSV_REMARKS]   = df_filtered[CSV_REMARKS].fillna('')
+    if CSV_REMARKS in df_filtered.columns:
+        df_filtered[CSV_REMARKS] = df_filtered[CSV_REMARKS].fillna('')
     if CSV_PU and CSV_PU in df_filtered.columns:
         df_filtered[CSV_PU] = df_filtered[CSV_PU].fillna('Planned')
 
